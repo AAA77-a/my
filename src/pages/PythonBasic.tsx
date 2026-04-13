@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { oneDark } from '@codemirror/theme-one-dark';
+import Pyodide from 'pyodide';
 
 // 代码示例数据
 const codeExamples = {
@@ -160,6 +164,30 @@ export default function PythonBasic() {
   const [exerciseInput, setExerciseInput] = useState<string>('');
   const [exerciseOutput, setExerciseOutput] = useState<string>('');
   const [currentExercise, setCurrentExercise] = useState<string | null>(null);
+  const [pyodide, setPyodide] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 初始化Pyodide
+  useEffect(() => {
+    const initPyodide = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const pyodideInstance = await Pyodide.loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+        });
+        setPyodide(pyodideInstance);
+      } catch (err) {
+        setError('Failed to load Python interpreter: ' + (err as Error).message);
+        console.error('Pyodide initialization error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initPyodide();
+  }, []);
 
   const toggleSection = (section: string) => {
     if (activeSection === section) {
@@ -185,22 +213,47 @@ export default function PythonBasic() {
     setExerciseOutput('');
   };
 
-  const executeCode = () => {
+  const executeCode = async () => {
+    if (!pyodide) {
+      setExerciseOutput('Python interpreter is not loaded yet.');
+      return;
+    }
+
     try {
-      // 简单的代码执行模拟
+      setExerciseOutput('Executing...');
+      
+      // 重定向stdout到我们的输出
       let output = '';
-      const consoleLog = (message: any) => {
-        output += message + '\n';
-      };
-      
-      // 模拟执行代码
-      const code = exerciseInput;
-      // 这里只是模拟，实际执行需要更复杂的处理
-      output = '代码执行结果：\n' + code;
-      
-      setExerciseOutput(output);
-    } catch (error) {
-      setExerciseOutput('执行错误：' + error);
+      pyodide.globals.set('console', {
+        log: (message: any) => {
+          output += message + '\n';
+        }
+      });
+
+      // 执行代码
+      await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+
+# 重定向stdout
+old_stdout = sys.stdout
+sys.stdout = StringIO()
+
+try:
+    ${exerciseInput}
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    # 恢复stdout并获取输出
+    output = sys.stdout.getvalue()
+    sys.stdout = old_stdout
+    console.log(output)
+`);
+
+      setExerciseOutput(output || 'No output');
+    } catch (err) {
+      setExerciseOutput('执行错误：' + (err as Error).message);
+      console.error('Code execution error:', err);
     }
   };
 
@@ -302,25 +355,40 @@ export default function PythonBasic() {
                       
                       {currentExercise === 'environment' && (
                         <div className="mt-4">
-                          <textarea
-                            value={exerciseInput}
-                            onChange={(e) => setExerciseInput(e.target.value)}
-                            placeholder="在此输入Python代码..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                            rows={6}
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={executeCode}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                            >
-                              运行代码
-                            </button>
-                          </div>
-                          {exerciseOutput && (
-                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                          {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                              <div className="text-emerald-600">加载Python解释器中...</div>
                             </div>
+                          ) : error ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                              {error}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <CodeMirror
+                                  value={exerciseInput}
+                                  onChange={(value) => setExerciseInput(value)}
+                                  extensions={[python()]}
+                                  theme={oneDark}
+                                  height="200px"
+                                  placeholder="在此输入Python代码..."
+                                />
+                              </div>
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={executeCode}
+                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                >
+                                  运行代码
+                                </button>
+                              </div>
+                              {exerciseOutput && (
+                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -415,25 +483,40 @@ export default function PythonBasic() {
                       
                       {currentExercise === 'variables' && (
                         <div className="mt-4">
-                          <textarea
-                            value={exerciseInput}
-                            onChange={(e) => setExerciseInput(e.target.value)}
-                            placeholder="在此输入Python代码..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                            rows={6}
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={executeCode}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                            >
-                              运行代码
-                            </button>
-                          </div>
-                          {exerciseOutput && (
-                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                          {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                              <div className="text-emerald-600">加载Python解释器中...</div>
                             </div>
+                          ) : error ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                              {error}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <CodeMirror
+                                  value={exerciseInput}
+                                  onChange={(value) => setExerciseInput(value)}
+                                  extensions={[python()]}
+                                  theme={oneDark}
+                                  height="200px"
+                                  placeholder="在此输入Python代码..."
+                                />
+                              </div>
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={executeCode}
+                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                >
+                                  运行代码
+                                </button>
+                              </div>
+                              {exerciseOutput && (
+                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -506,25 +589,40 @@ export default function PythonBasic() {
                       
                       {currentExercise === 'operators' && (
                         <div className="mt-4">
-                          <textarea
-                            value={exerciseInput}
-                            onChange={(e) => setExerciseInput(e.target.value)}
-                            placeholder="在此输入Python代码..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                            rows={6}
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={executeCode}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                            >
-                              运行代码
-                            </button>
-                          </div>
-                          {exerciseOutput && (
-                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                          {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                              <div className="text-emerald-600">加载Python解释器中...</div>
                             </div>
+                          ) : error ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                              {error}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <CodeMirror
+                                  value={exerciseInput}
+                                  onChange={(value) => setExerciseInput(value)}
+                                  extensions={[python()]}
+                                  theme={oneDark}
+                                  height="200px"
+                                  placeholder="在此输入Python代码..."
+                                />
+                              </div>
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={executeCode}
+                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                >
+                                  运行代码
+                                </button>
+                              </div>
+                              {exerciseOutput && (
+                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -597,25 +695,40 @@ export default function PythonBasic() {
                       
                       {currentExercise === 'functions' && (
                         <div className="mt-4">
-                          <textarea
-                            value={exerciseInput}
-                            onChange={(e) => setExerciseInput(e.target.value)}
-                            placeholder="在此输入Python代码..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                            rows={6}
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={executeCode}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                            >
-                              运行代码
-                            </button>
-                          </div>
-                          {exerciseOutput && (
-                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                          {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                              <div className="text-emerald-600">加载Python解释器中...</div>
                             </div>
+                          ) : error ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                              {error}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <CodeMirror
+                                  value={exerciseInput}
+                                  onChange={(value) => setExerciseInput(value)}
+                                  extensions={[python()]}
+                                  theme={oneDark}
+                                  height="200px"
+                                  placeholder="在此输入Python代码..."
+                                />
+                              </div>
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={executeCode}
+                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                >
+                                  运行代码
+                                </button>
+                              </div>
+                              {exerciseOutput && (
+                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -693,25 +806,40 @@ export default function PythonBasic() {
                       
                       {currentExercise === 'oop' && (
                         <div className="mt-4">
-                          <textarea
-                            value={exerciseInput}
-                            onChange={(e) => setExerciseInput(e.target.value)}
-                            placeholder="在此输入Python代码..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                            rows={6}
-                          />
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={executeCode}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                            >
-                              运行代码
-                            </button>
-                          </div>
-                          {exerciseOutput && (
-                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                          {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                              <div className="text-emerald-600">加载Python解释器中...</div>
                             </div>
+                          ) : error ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                              {error}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <CodeMirror
+                                  value={exerciseInput}
+                                  onChange={(value) => setExerciseInput(value)}
+                                  extensions={[python()]}
+                                  theme={oneDark}
+                                  height="200px"
+                                  placeholder="在此输入Python代码..."
+                                />
+                              </div>
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={executeCode}
+                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                >
+                                  运行代码
+                                </button>
+                              </div>
+                              {exerciseOutput && (
+                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
