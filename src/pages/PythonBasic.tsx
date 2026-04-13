@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
-import Pyodide from 'pyodide';
+
+// 声明Pyodide类型
+declare global {
+  interface Window {
+    pyodide: any;
+  }
+}
 
 // 代码示例数据
 const codeExamples = {
@@ -174,12 +180,56 @@ export default function PythonBasic() {
       try {
         setLoading(true);
         setError(null);
-        const pyodideInstance = await Pyodide.loadPyodide({
-          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
-        });
-        setPyodide(pyodideInstance);
+
+        console.log('Starting Pyodide initialization...');
+
+        // 检查Pyodide是否已经加载
+        if (!window.pyodide) {
+          console.log('Pyodide not found, loading script...');
+          
+          // 动态加载Pyodide脚本
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+            script.onload = () => {
+              console.log('Pyodide script loaded successfully');
+              // 等待一段时间，确保脚本完全初始化
+              setTimeout(resolve, 1000);
+            };
+            script.onerror = () => {
+              console.error('Failed to load pyodide.js');
+              reject(new Error('Failed to load pyodide.js'));
+            };
+            document.body.appendChild(script);
+          });
+
+          // 初始化Pyodide
+          console.log('Initializing Pyodide...');
+          console.log('window.loadPyodide:', typeof window.loadPyodide);
+          
+          if (typeof window.loadPyodide === 'function') {
+            try {
+              console.log('Using top-level loadPyodide function');
+              const pyodideInstance = await window.loadPyodide({
+                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+              });
+              console.log('Pyodide initialized successfully');
+              console.log('Initialized pyodide:', pyodideInstance);
+              setPyodide(pyodideInstance);
+            } catch (loadError) {
+              console.error('Error loading Pyodide:', loadError);
+              throw loadError;
+            }
+          } else {
+            throw new Error('loadPyodide function not found');
+          }
+        } else {
+          console.log('Pyodide already loaded');
+          setPyodide(window.pyodide);
+        }
       } catch (err) {
-        setError('Failed to load Python interpreter: ' + (err as Error).message);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError('Failed to load Python interpreter: ' + errorMessage);
         console.error('Pyodide initialization error:', err);
       } finally {
         setLoading(false);
