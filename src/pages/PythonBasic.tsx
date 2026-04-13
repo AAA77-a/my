@@ -154,137 +154,12 @@ with open("example.txt", "r", encoding="utf-8") as f:
         print(line.strip())`
 };
 
-const exercise1 = `# 练习1：变量类型转换
-str_num = "123"
-int_num = int(str_num)
-print(f"字符串转整数: {int_num}, 类型: {type(int_num)}")
-
-int_num = 123
-str_num = str(int_num)
-print(f"整数转字符串: {str_num}, 类型: {type(str_num)}")
-
-float_num = 3.14
-int_num = int(float_num)
-print(f"浮点数转整数: {int_num}, 类型: {type(int_num)}")`;
-
-const exercise2 = `# 练习2：数据类型操作
-# 创建列表
-fruits = ["apple", "banana", "cherry"]
-print(f"初始列表: {fruits}")
-
-# 添加元素
-fruits.append("orange")
-print(f"添加后: {fruits}")
-
-# 删除元素
-fruits.remove("banana")
-print(f"删除后: {fruits}")
-
-# 切片操作
-print(f"切片 [1:3]: {fruits[1:3]}")
-print(f"切片 [:2]: {fruits[:2]}")
-print(f"切片 [1:]: {fruits[1:]}")`;
-
-const exercise3 = `# 练习1：计算BMI指数
-height = float(input("请输入身高（米）: "))
-weight = float(input("请输入体重（公斤）: "))
-
-bmi = weight / (height ** 2)
-print(f"你的BMI指数是: {bmi:.2f}")
-
-if bmi < 18.5:
-    print("体重过轻")
-elif bmi < 24:
-    print("体重正常")
-elif bmi < 28:
-    print("超重")
-else:
-    print("肥胖")`;
-
-const exercise4 = `# 练习2：打印乘法表
-for i in range(1, 10):
-    for j in range(1, i+1):
-        print(f"{j} × {i} = {i*j}", end="\t")
-    print()`;
-
-const exercise5 = `# 练习1：计算阶乘
-def factorial(n):
-    """计算n的阶乘"""
-    if n == 0 or n == 1:
-        return 1
-    else:
-        return n * factorial(n-1)
-
-# 测试
-print(factorial(5))  # 120
-print(factorial(10)) # 3628800`;
-
-const exercise6 = `# 练习2：统计列表元素频率
-def count_frequency(lst):
-    """统计列表元素频率"""
-    frequency = {}
-    for item in lst:
-        if item in frequency:
-            frequency[item] += 1
-        else:
-            frequency[item] = 1
-    return frequency
-
-# 测试
-numbers = [1, 2, 3, 2, 1, 3, 4, 2, 5]
-print(count_frequency(numbers))`;
-
-const exercise7 = `# 练习1：创建学生管理系统
-class Student:
-    def __init__(self, id, name, age, major):
-        self.id = id
-        self.name = name
-        self.age = age
-        self.major = major
-    
-    def __str__(self):
-        return f"ID: {self.id}, Name: {self.name}, Age: {self.age}, Major: {self.major}"
-
-class StudentManager:
-    def __init__(self):
-        self.students = []
-    
-    def add_student(self, student):
-        self.students.append(student)
-    
-    def remove_student(self, student_id):
-        for student in self.students:
-            if student.id == student_id:
-                self.students.remove(student)
-                return True
-        return False
-    
-    def get_student(self, student_id):
-        for student in self.students:
-            if student.id == student_id:
-                return student
-        return None
-    
-    def list_students(self):
-        for student in self.students:
-            print(student)
-
-# 测试
-manager = StudentManager()
-manager.add_student(Student(1, "黄安德", 20, "商务数据分析"))
-manager.add_student(Student(2, "张三", 21, "计算机科学"))
-manager.list_students()
-
-student = manager.get_student(1)
-print(f"\n查找学生: {student}")
-
-manager.remove_student(2)
-print("\n删除后:")
-manager.list_students()`;
-
 export default function PythonBasic() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
+  const [exerciseInput, setExerciseInput] = useState<string>('');
+  const [exerciseOutput, setExerciseOutput] = useState<string>('');
+  const [currentExercise, setCurrentExercise] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
     if (activeSection === section) {
@@ -301,6 +176,31 @@ export default function PythonBasic() {
       setActiveSubSection(null);
     } else {
       setActiveSubSection(subsection);
+    }
+  };
+
+  const runExercise = (exercise: string) => {
+    setCurrentExercise(exercise);
+    setExerciseInput('');
+    setExerciseOutput('');
+  };
+
+  const executeCode = () => {
+    try {
+      // 简单的代码执行模拟
+      let output = '';
+      const consoleLog = (message: any) => {
+        output += message + '\n';
+      };
+      
+      // 模拟执行代码
+      const code = exerciseInput;
+      // 这里只是模拟，实际执行需要更复杂的处理
+      output = '代码执行结果：\n' + code;
+      
+      setExerciseOutput(output);
+    } catch (error) {
+      setExerciseOutput('执行错误：' + error);
     }
   };
 
@@ -384,6 +284,49 @@ export default function PythonBasic() {
                     同一行显示多条语句可用分号;分隔。
                   </p>
                 </div>
+                
+                <div className="mb-6">
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">自主练习</h3>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-700 mb-4">练习：编写一个简单的Python程序</h4>
+                    <p className="text-gray-600 mb-4">
+                      编写一个程序，输出你的姓名、年龄和专业，并添加适当的注释说明。
+                    </p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => runExercise('environment')}
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                      >
+                        开始练习
+                      </button>
+                      
+                      {currentExercise === 'environment' && (
+                        <div className="mt-4">
+                          <textarea
+                            value={exerciseInput}
+                            onChange={(e) => setExerciseInput(e.target.value)}
+                            placeholder="在此输入Python代码..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            rows={6}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={executeCode}
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            >
+                              运行代码
+                            </button>
+                          </div>
+                          {exerciseOutput && (
+                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -449,22 +392,51 @@ export default function PythonBasic() {
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-xl font-medium text-gray-700 mb-3">代码练习</h3>
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">代码示例</h3>
                   <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
                     <pre className="text-sm">{codeExamples.variables}</pre>
                   </div>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习1：变量类型转换</h4>
-                    <p className="text-gray-600 mb-2">将字符串"123"转换为整数，将整数123转换为字符串，将浮点数3.14转换为整数。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise1}</pre>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习2：数据类型操作</h4>
-                    <p className="text-gray-600 mb-2">创建一个列表，添加元素，删除元素，使用切片操作。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise2}</pre>
+                </div>
+                
+                <div className="mb-6">
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">自主练习</h3>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-700 mb-4">练习：数据类型操作</h4>
+                    <p className="text-gray-600 mb-4">
+                      创建一个包含学生信息的字典，包括姓名、年龄、专业和课程列表，然后进行相应的操作。
+                    </p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => runExercise('variables')}
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                      >
+                        开始练习
+                      </button>
+                      
+                      {currentExercise === 'variables' && (
+                        <div className="mt-4">
+                          <textarea
+                            value={exerciseInput}
+                            onChange={(e) => setExerciseInput(e.target.value)}
+                            placeholder="在此输入Python代码..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            rows={6}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={executeCode}
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            >
+                              运行代码
+                            </button>
+                          </div>
+                          {exerciseOutput && (
+                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -518,19 +490,44 @@ export default function PythonBasic() {
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-xl font-medium text-gray-700 mb-3">代码练习</h3>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习1：计算BMI指数</h4>
-                    <p className="text-gray-600 mb-2">根据身高和体重计算BMI指数，并判断体重状态。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise3}</pre>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习2：打印乘法表</h4>
-                    <p className="text-gray-600 mb-2">使用嵌套循环打印99乘法表。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise4}</pre>
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">自主练习</h3>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-700 mb-4">练习：成绩等级判断</h4>
+                    <p className="text-gray-600 mb-4">
+                      编写一个程序，根据输入的分数判断成绩等级：90-100为优秀，80-89为良好，70-79为中等，60-69为及格，60以下为不及格。
+                    </p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => runExercise('operators')}
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                      >
+                        开始练习
+                      </button>
+                      
+                      {currentExercise === 'operators' && (
+                        <div className="mt-4">
+                          <textarea
+                            value={exerciseInput}
+                            onChange={(e) => setExerciseInput(e.target.value)}
+                            placeholder="在此输入Python代码..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            rows={6}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={executeCode}
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            >
+                              运行代码
+                            </button>
+                          </div>
+                          {exerciseOutput && (
+                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -584,19 +581,44 @@ export default function PythonBasic() {
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-xl font-medium text-gray-700 mb-3">代码练习</h3>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习1：计算阶乘</h4>
-                    <p className="text-gray-600 mb-2">使用函数计算一个数的阶乘。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise5}</pre>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习2：统计列表元素频率</h4>
-                    <p className="text-gray-600 mb-2">编写函数统计列表中每个元素出现的频率。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise6}</pre>
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">自主练习</h3>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-700 mb-4">练习：温度转换函数</h4>
+                    <p className="text-gray-600 mb-4">
+                      编写一个函数，将摄氏度转换为华氏度，公式：华氏度 = 摄氏度 × 9/5 + 32。
+                    </p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => runExercise('functions')}
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                      >
+                        开始练习
+                      </button>
+                      
+                      {currentExercise === 'functions' && (
+                        <div className="mt-4">
+                          <textarea
+                            value={exerciseInput}
+                            onChange={(e) => setExerciseInput(e.target.value)}
+                            placeholder="在此输入Python代码..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            rows={6}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={executeCode}
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            >
+                              运行代码
+                            </button>
+                          </div>
+                          {exerciseOutput && (
+                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -655,12 +677,44 @@ export default function PythonBasic() {
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-xl font-medium text-gray-700 mb-3">代码练习</h3>
-                  <div className="mt-3">
-                    <h4 className="font-medium text-gray-700 mb-2">练习1：创建学生管理系统</h4>
-                    <p className="text-gray-600 mb-2">使用面向对象编程创建一个简单的学生管理系统。</p>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{exercise7}</pre>
+                  <h3 className="text-xl font-medium text-gray-700 mb-3">自主练习</h3>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-700 mb-4">练习：创建图书类</h4>
+                    <p className="text-gray-600 mb-4">
+                      编写一个Book类，包含书名、作者、出版年份等属性，以及获取图书信息的方法。
+                    </p>
+                    <div className="mt-4">
+                      <button 
+                        onClick={() => runExercise('oop')}
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                      >
+                        开始练习
+                      </button>
+                      
+                      {currentExercise === 'oop' && (
+                        <div className="mt-4">
+                          <textarea
+                            value={exerciseInput}
+                            onChange={(e) => setExerciseInput(e.target.value)}
+                            placeholder="在此输入Python代码..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            rows={6}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={executeCode}
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                            >
+                              运行代码
+                            </button>
+                          </div>
+                          {exerciseOutput && (
+                            <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                              <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
