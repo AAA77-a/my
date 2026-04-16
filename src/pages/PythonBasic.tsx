@@ -312,11 +312,20 @@ export default function PythonBasic() {
       try {
         setExerciseOutput('Executing...');
         
+        // 重定向stdout
+        let output = '';
+        pyodide.globals.set('print', (text: any) => {
+          output += String(text) + '\n';
+        });
+        
         // 执行用户代码
         await pyodide.runPythonAsync(exerciseInput);
         
-        // 显示成功信息
-        setExerciseOutput('代码执行成功！');
+        // 恢复默认print函数
+        pyodide.globals.set('print', pyodide.globals.get('__builtins__').print);
+        
+        // 显示输出
+        setExerciseOutput(output || '代码执行成功！');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         setExerciseOutput('执行错误：' + errorMessage);
