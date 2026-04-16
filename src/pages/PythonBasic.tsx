@@ -282,9 +282,33 @@ export default function PythonBasic() {
     try {
       setExerciseOutput('Executing...');
       
-      // 执行代码
-      const result = await pyodide.runPythonAsync(exerciseInput);
-      setExerciseOutput(result || 'No output');
+      // 捕获输出
+      let output = '';
+      
+      // 保存原始输出函数
+      const originalStdout = pyodide.globals.get('sys').stdout;
+      
+      // 创建自定义输出对象
+      const captureOutput = {
+        write: (text: string) => {
+          output += text;
+        },
+        flush: () => {}
+      };
+      
+      // 设置输出捕获
+      pyodide.globals.get('sys').stdout = captureOutput;
+      
+      try {
+        // 执行用户代码
+        await pyodide.runPythonAsync(exerciseInput);
+      } finally {
+        // 恢复原始输出
+        pyodide.globals.get('sys').stdout = originalStdout;
+      }
+      
+      // 显示输出
+      setExerciseOutput(output || 'No output');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setExerciseOutput('执行错误：' + errorMessage);
