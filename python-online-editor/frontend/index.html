@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python在线编辑器</title>
+    
+    <!-- 引入Monaco Editor -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
+    
+    <!-- 引入CSS样式 -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 标题区域 -->
+        <header class="header">
+            <h1>Python在线编辑器</h1>
+            <p class="subtitle">快速编写和运行Python代码</p>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 编辑器区域 -->
+            <div class="editor-section">
+                <div class="section-header">
+                    <h2>代码编辑区</h2>
+                </div>
+                <div id="monaco-editor" class="code-editor"></div>
+            </div>
+
+            <!-- 按钮区域 -->
+            <div class="button-group">
+                <button id="run-btn" class="btn btn-run">
+                    <span class="btn-icon">▶</span>
+                    运行代码
+                </button>
+                <button id="clear-btn" class="btn btn-clear">
+                    <span class="btn-icon">🗑</span>
+                    清空代码
+                </button>
+            </div>
+
+            <!-- 结果展示区域 -->
+            <div class="output-section">
+                <div class="section-header">
+                    <h2>运行结果</h2>
+                    <div id="status-indicator" class="status-indicator"></div>
+                </div>
+                <div id="output" class="output-area"></div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>Python在线编辑器 - 安全便捷的代码运行环境</p>
+        </footer>
+    </div>
+
+    <!-- 引入JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
