@@ -1,35 +1,14 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+import http.server
+import socketserver
+import json
 import subprocess
 import sys
 import tempfile
 import os
 import uuid
-from typing import Optional
 import re
 
-# 初始化FastAPI应用
-app = FastAPI(title="Python在线编辑器API", version="1.0.0")
-
-# 配置CORS允许前端访问
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 定义请求数据模型
-class CodeRequest(BaseModel):
-    code: str
-
-# 定义响应数据模型
-class CodeResponse(BaseModel):
-    success: bool
-    output: Optional[str] = None
-    error: Optional[str] = None
+PORT = 8000
 
 # 安全检查：禁止执行危险操作
 def is_safe_code(code: str) -> tuple[bool, str]:
@@ -111,67 +90,130 @@ def execute_python_code(code: str, timeout: int = 5) -> tuple[str, str]:
             except:
                 pass
 
-# API端点：执行Python代码
-@app.post("/run", response_model=CodeResponse)
-async def run_code(request: CodeRequest):
-    """
-    接收Python代码并执行，返回执行结果
-    """
-    code = request.code.strip()
+# 自定义HTTP请求处理器
+class PythonCodeHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/':
+            # 健康检查
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            response = {
+                "status": "healthy",
+                "message": "Python在线编辑器API运行正常",
+                "version": "1.0.0"
+            }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
     
-    if not code:
-        raise HTTPException(status_code=400, detail="请输入Python代码")
+    def do_POST(self):
+        if self.path == '/run':
+            # 处理代码执行请求
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            
+            try:
+                data = json.loads(post_data)
+                if not data or "code" not in data:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    response = {
+                        "success": False,
+                        "error": "请输入Python代码"
+                    }
+                    self.wfile.write(json.dumps(response).encode('utf-8'))
+                    return
+                
+                code = data["code"].strip()
+                
+                if not code:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    response = {
+                        "success": False,
+                        "error": "请输入Python代码"
+                    }
+                    self.wfile.write(json.dumps(response).encode('utf-8'))
+                    return
+                
+                # 安全检查
+                is_safe, error_msg = is_safe_code(code)
+                if not is_safe:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    response = {
+                        "success": False,
+                        "error": f"安全警告：{error_msg}"
+                    }
+                    self.wfile.write(json.dumps(response).encode('utf-8'))
+                    return
+                
+                # 执行代码
+                stdout, stderr = execute_python_code(code)
+                
+                # 构造响应
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                
+                if stderr:
+                    response = {
+                        "success": False,
+                        "error": stderr
+                    }
+                else:
+                    response = {
+                        "success": True,
+                        "output": stdout or "代码执行成功，没有输出"
+                    }
+                
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                response = {
+                    "success": False,
+                    "error": f"服务器错误：{str(e)}"
+                }
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
     
-    # 安全检查
-    is_safe, error_msg = is_safe_code(code)
-    if not is_safe:
-        return CodeResponse(
-            success=False,
-            error=f"安全警告：{error_msg}"
-        )
-    
-    # 执行代码
-    stdout, stderr = execute_python_code(code)
-    
-    # 构造响应
-    if stderr:
-        return CodeResponse(
-            success=False,
-            error=stderr
-        )
-    else:
-        return CodeResponse(
-            success=True,
-            output=stdout or "代码执行成功，没有输出"
-        )
-
-# API端点：健康检查
-@app.get("/")
-async def health_check():
-    """
-    健康检查接口
-    """
-    return {
-        "status": "healthy",
-        "message": "Python在线编辑器API运行正常",
-        "version": "1.0.0"
-    }
+    def do_OPTIONS(self):
+        # 处理CORS预检请求
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
 
 # 主程序入口
 if __name__ == "__main__":
-    import uvicorn
-    
     print("=" * 50)
     print("Python在线编辑器 - 后端服务")
     print("=" * 50)
     print("\n启动服务中...")
-    print("访问地址: http://localhost:8000")
-    print("API文档: http://localhost:8000/docs")
+    print(f"访问地址: http://localhost:{PORT}")
     print("\n按 Ctrl+C 停止服务")
     print("=" * 50)
     
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000
-    )
+    # 创建服务器
+    with socketserver.TCPServer(("0.0.0.0", PORT), PythonCodeHandler) as httpd:
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n服务已停止")
+            httpd.shutdown()
