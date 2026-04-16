@@ -282,37 +282,12 @@ export default function PythonBasic() {
     try {
       setExerciseOutput('Executing...');
       
-      // 重定向stdout到我们的输出
-      let output = '';
-      pyodide.globals.set('console', {
-        log: (message: any) => {
-          output += message + '\n';
-        }
-      });
-
       // 执行代码
-      await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-
-# 重定向stdout
-old_stdout = sys.stdout
-sys.stdout = StringIO()
-
-try:
-    ${exerciseInput}
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    # 恢复stdout并获取输出
-    output = sys.stdout.getvalue()
-    sys.stdout = old_stdout
-    console.log(output)
-`);
-
-      setExerciseOutput(output || 'No output');
+      const result = await pyodide.runPythonAsync(exerciseInput);
+      setExerciseOutput(result || 'No output');
     } catch (err) {
-      setExerciseOutput('执行错误：' + (err as Error).message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setExerciseOutput('执行错误：' + errorMessage);
       console.error('Code execution error:', err);
     }
   };
