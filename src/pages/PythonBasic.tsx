@@ -173,6 +173,7 @@ export default function PythonBasic() {
   const [pyodide, setPyodide] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [executionMode, setExecutionMode] = useState<string>('pyodide'); // 'pyodide' or 'backend'
 
   // 初始化Pyodide
   useEffect(() => {
@@ -273,28 +274,57 @@ export default function PythonBasic() {
     setExerciseOutput('');
   };
 
-  const executeCode = async () => {
-    if (!pyodide) {
-      setExerciseOutput('Python interpreter is not loaded yet.');
-      return;
-    }
-
+  // 使用后端服务器执行Python代码
+  const executeCodeBackend = async () => {
     try {
       setExerciseOutput('Executing...');
       
-      // 简单直接的执行方法
-      // 1. 首先测试基本功能
-      await pyodide.runPythonAsync('print("Hello from Pyodide!")');
+      const response = await fetch('http://localhost:8000/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: exerciseInput })
+      });
       
-      // 2. 执行用户代码
-      await pyodide.runPythonAsync(exerciseInput);
+      const data = await response.json();
       
-      // 3. 显示成功信息
-      setExerciseOutput('代码执行成功！');
+      if (data.success) {
+        setExerciseOutput(data.output);
+      } else {
+        setExerciseOutput('执行错误：' + data.error);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setExerciseOutput('执行错误：' + errorMessage);
-      console.error('Code execution error:', err);
+      console.error('Backend execution error:', err);
+    }
+  };
+
+  // 执行代码（根据选择的模式）
+  const executeCode = async () => {
+    if (executionMode === 'pyodide') {
+      if (!pyodide) {
+        setExerciseOutput('Python interpreter is not loaded yet.');
+        return;
+      }
+
+      try {
+        setExerciseOutput('Executing...');
+        
+        // 执行用户代码
+        await pyodide.runPythonAsync(exerciseInput);
+        
+        // 显示成功信息
+        setExerciseOutput('代码执行成功！');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setExerciseOutput('执行错误：' + errorMessage);
+        console.error('Pyodide execution error:', err);
+      }
+    } else {
+      // 使用后端服务器执行
+      await executeCodeBackend();
     }
   };
 
@@ -406,6 +436,35 @@ export default function PythonBasic() {
                             </div>
                           ) : (
                             <>
+                              {/* 执行模式切换 */}
+                              <div className="mb-4 flex items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="pyodide"
+                                      checked={executionMode === 'pyodide'}
+                                      onChange={() => setExecutionMode('pyodide')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="backend"
+                                      checked={executionMode === 'backend'}
+                                      onChange={() => setExecutionMode('backend')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">后端执行 (服务器)</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
                               <div className="border border-gray-300 rounded-lg overflow-hidden">
                                 <CodeMirror
                                   value={exerciseInput}
