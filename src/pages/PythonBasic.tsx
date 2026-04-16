@@ -184,37 +184,50 @@ export default function PythonBasic() {
         console.log('Starting Pyodide initialization...');
 
         // 检查Pyodide是否已经加载
-        if (!window.pyodide) {
-          console.log('Pyodide not found, loading script...');
+        if (typeof window.loadPyodide === 'function') {
+          try {
+            console.log('Using top-level loadPyodide function');
+            const pyodideInstance = await window.loadPyodide({
+              indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+            });
+            console.log('Pyodide initialized successfully');
+            setPyodide(pyodideInstance);
+          } catch (loadError) {
+            console.error('Error loading Pyodide:', loadError);
+            throw loadError;
+          }
+        } else {
+          console.log('loadPyodide not found, loading script...');
           
           // 动态加载Pyodide脚本
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+            script.type = 'text/javascript';
+            script.crossOrigin = 'anonymous';
             script.onload = () => {
               console.log('Pyodide script loaded successfully');
-              // 等待一段时间，确保脚本完全初始化
-              setTimeout(resolve, 1000);
+              // 直接调用loadPyodide
+              if (typeof window.loadPyodide === 'function') {
+                resolve();
+              } else {
+                reject(new Error('loadPyodide function not available after script load'));
+              }
             };
-            script.onerror = () => {
-              console.error('Failed to load pyodide.js');
+            script.onerror = (e) => {
+              console.error('Failed to load pyodide.js:', e);
               reject(new Error('Failed to load pyodide.js'));
             };
             document.body.appendChild(script);
           });
 
-          // 初始化Pyodide
-          console.log('Initializing Pyodide...');
-          console.log('window.loadPyodide:', typeof window.loadPyodide);
-          
+          // 再次尝试初始化
           if (typeof window.loadPyodide === 'function') {
             try {
-              console.log('Using top-level loadPyodide function');
               const pyodideInstance = await window.loadPyodide({
                 indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
               });
               console.log('Pyodide initialized successfully');
-              console.log('Initialized pyodide:', pyodideInstance);
               setPyodide(pyodideInstance);
             } catch (loadError) {
               console.error('Error loading Pyodide:', loadError);
@@ -223,9 +236,6 @@ export default function PythonBasic() {
           } else {
             throw new Error('loadPyodide function not found');
           }
-        } else {
-          console.log('Pyodide already loaded');
-          setPyodide(window.pyodide);
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
