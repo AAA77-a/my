@@ -602,6 +602,35 @@ export default function PythonBasic() {
                             </div>
                           ) : (
                             <>
+                              {/* 执行模式切换 */}
+                              <div className="mb-4 flex items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="pyodide"
+                                      checked={executionMode === 'pyodide'}
+                                      onChange={() => setExecutionMode('pyodide')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="backend"
+                                      checked={executionMode === 'backend'}
+                                      onChange={() => setExecutionMode('backend')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">后端执行 (服务器)</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
                               <div className="border border-gray-300 rounded-lg overflow-hidden">
                                 <CodeMirror
                                   value={exerciseInput}
@@ -708,6 +737,35 @@ export default function PythonBasic() {
                             </div>
                           ) : (
                             <>
+                              {/* 执行模式切换 */}
+                              <div className="mb-4 flex items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="pyodide"
+                                      checked={executionMode === 'pyodide'}
+                                      onChange={() => setExecutionMode('pyodide')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="backend"
+                                      checked={executionMode === 'backend'}
+                                      onChange={() => setExecutionMode('backend')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">后端执行 (服务器)</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
                               <div className="border border-gray-300 rounded-lg overflow-hidden">
                                 <CodeMirror
                                   value={exerciseInput}
@@ -814,6 +872,35 @@ export default function PythonBasic() {
                             </div>
                           ) : (
                             <>
+                              {/* 执行模式切换 */}
+                              <div className="mb-4 flex items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="pyodide"
+                                      checked={executionMode === 'pyodide'}
+                                      onChange={() => setExecutionMode('pyodide')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="backend"
+                                      checked={executionMode === 'backend'}
+                                      onChange={() => setExecutionMode('backend')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">后端执行 (服务器)</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
                               <div className="border border-gray-300 rounded-lg overflow-hidden">
                                 <CodeMirror
                                   value={exerciseInput}
@@ -925,6 +1012,35 @@ export default function PythonBasic() {
                             </div>
                           ) : (
                             <>
+                              {/* 执行模式切换 */}
+                              <div className="mb-4 flex items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="pyodide"
+                                      checked={executionMode === 'pyodide'}
+                                      onChange={() => setExecutionMode('pyodide')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="executionMode"
+                                      value="backend"
+                                      checked={executionMode === 'backend'}
+                                      onChange={() => setExecutionMode('backend')}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">后端执行 (服务器)</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
                               <div className="border border-gray-300 rounded-lg overflow-hidden">
                                 <CodeMirror
                                   value={exerciseInput}
