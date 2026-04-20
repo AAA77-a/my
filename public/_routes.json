@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": ["/assets/*", "/favicon.svg"],
+  "rules": [
+    {
+      "service": "pages",
+      "path": "/*",
+      "headers": {
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-xss-protection": "1; mode=block"
+      }
+    }
+  ]
+}

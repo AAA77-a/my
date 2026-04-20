@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 // 课程数据
 const courses = [
@@ -42,7 +43,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-xl font-light tracking-wide">黄安德</div>
           <div className="flex space-x-6">
-            <a href="#" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</a>
+            <Link to="/" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</Link>
             <a href="#courses" className="hover:text-emerald-500 transition-colors text-sm font-medium">课程</a>
             <a href="#about" className="hover:text-emerald-500 transition-colors text-sm font-medium">关于我</a>
           </div>
@@ -90,12 +91,12 @@ export default function Home() {
                   <h3 className="text-xl font-medium mb-3 text-gray-700">{course.name}</h3>
                   <p className="text-gray-500 mb-6 text-sm leading-relaxed">{course.description}</p>
                   {course.name === 'Python基础' ? (
-                    <a 
-                      href="/python-basic" 
+                    <Link 
+                      to="/python-basic" 
                       className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium inline-block"
                     >
                       查看详情
-                    </a>
+                    </Link>
                   ) : (
                     <button className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium">
                       查看详情

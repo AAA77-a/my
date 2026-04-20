@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -345,7 +346,7 @@ export default function PythonBasic() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-xl font-light tracking-wide">黄安德</div>
           <div className="flex space-x-6">
-            <a href="/" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</a>
+            <Link to="/" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</Link>
             <a href="/#courses" className="hover:text-emerald-500 transition-colors text-sm font-medium">课程</a>
             <a href="/#about" className="hover:text-emerald-500 transition-colors text-sm font-medium">关于我</a>
           </div>
