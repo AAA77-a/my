@@ -4315,4 +4315,390 @@ export default function DataAnalysis() {
       {/* 知识点内容 */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          {/*
+          {/*import React, { useState } from 'react';import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePointsimport React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   -import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3.import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度规约
+   - 数值规约
+    `
+  },
+  {
+    id:import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度规约
+   - 数值规约
+    `
+  },
+  {
+    id: 2,
+    title: '描述性统计',
+    description: '集中趋势、import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度规约
+   - 数值规约
+    `
+  },
+  {
+    id: 2,
+    title: '描述性统计',
+    description: '集中趋势、离散程度、分布形态的基本统计量计算和解释。',
+    content: `
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度规约
+   - 数值规约
+    `
+  },
+  {
+    id: 2,
+    title: '描述性统计',
+    description: '集中趋势、离散程度、分布形态的基本统计量计算和解释。',
+    content: `
+## 描述性统计指标
+
+### 集中趋势
+- 均值 (Mean)
+-import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+// 数据分析知识点
+const knowledgePoints = [
+  {
+    id: 1,
+    title: '数据预处理',
+    description: '数据清洗、缺失值处理、异常值检测、数据转换和标准化的基本技术。',
+    content: `
+## 数据预处理的重要性
+
+数据预处理是数据分析的第一步，通常占据整个分析过程的70-80%时间。
+
+## 主要步骤
+
+1. **数据清洗**
+   - 处理缺失值
+   - 去除重复数据
+   - 处理异常值
+
+2. **数据转换**
+   - 标准化
+   - 归一化
+   - 对数转换
+
+3. **数据集成**
+   - 合并多个数据源
+   - 处理数据冲突
+
+4. **数据规约**
+   - 维度规约
+   - 数值规约
+    `
+  },
+  {
+    id: 2,
+    title: '描述性统计',
+    description: '集中趋势、离散程度、分布形态的基本统计量计算和解释。',
+    content: `
+## 描述性统计指标
+
+### 集中趋势
+- 均值 (Mean)
+- 中位数 (Median)
+- 众数 (Mode)
+
+### 离散程度
