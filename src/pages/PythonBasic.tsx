@@ -7,6 +7,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 declare global {
   interface Window {
     pyodide: any;
+    loadPyodide: any;
   }
 }
 
