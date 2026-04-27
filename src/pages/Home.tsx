@@ -91,12 +91,19 @@ export default function Home() {
                   <h3 className="text-xl font-medium mb-3 text-gray-700">{course.name}</h3>
                   <p className="text-gray-500 mb-6 text-sm leading-relaxed">{course.description}</p>
                   {course.name === 'Python基础' ? (
-                    <Link 
-                      to="/python-basic" 
+                    <a 
+                      href="/python-basic" 
                       className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium inline-block"
                     >
                       查看详情
-                    </Link>
+                    </a>
+                  ) : course.name === '数据分析技术' ? (
+                    <a 
+                      href="/data-analysis" 
+                      className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium inline-block"
+                    >
+                      查看详情
+                    </a>
                   ) : (
                     <button className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium">
                       查看详情
