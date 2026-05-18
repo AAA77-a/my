@@ -42,7 +42,7 @@ export default function DataAnalysis() {
               我们推荐使用以下在线数据分析平台进行实践练习，它提供了丰富的数据可视化和分析功能。
             </p>
             <a 
-              href="https://f0ade77c.aaa11-eep.pages.dev/" 
+              href="https://aaa11-eep.pages.dev/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-emerald-600 text-white px-6 py-3 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium inline-block"
