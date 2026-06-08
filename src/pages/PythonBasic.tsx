@@ -254,17 +254,34 @@ print(f"作者：{book1.author}")
 print(f"出版年份：{book1.year}")`
 };
 
+// 练习状态类型
+interface ExerciseState {
+  input: string;
+  output: string;
+  showAnswer: boolean;
+}
+
+// 初始化练习状态
+const initialExerciseState: ExerciseState = {
+  input: '',
+  output: '',
+  showAnswer: false
+};
+
 export default function PythonBasic() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
-  const [exerciseInput, setExerciseInput] = useState<string>('');
-  const [exerciseOutput, setExerciseOutput] = useState<string>('');
-  const [currentExercise, setCurrentExercise] = useState<string | null>(null);
   const [pyodide, setPyodide] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [executionMode, setExecutionMode] = useState<string>('pyodide'); // 'pyodide' or 'backend'
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [executionMode, setExecutionMode] = useState<string>('pyodide');
+  const [exerciseStates, setExerciseStates] = useState<Record<string, ExerciseState>>({
+    environment: { ...initialExerciseState },
+    variables: { ...initialExerciseState },
+    operators: { ...initialExerciseState },
+    functions: { ...initialExerciseState },
+    oop: { ...initialExerciseState }
+  });
 
   // 初始化Pyodide
   useEffect(() => {
@@ -275,12 +292,16 @@ export default function PythonBasic() {
 
         console.log('Starting Pyodide initialization...');
 
+        // 使用更新版本的Pyodide
+        const pyodideVersion = 'v0.26.2';
+        const indexURL = `https://cdn.jsdelivr.net/pyodide/${pyodideVersion}/full/`;
+
         // 检查Pyodide是否已经加载
         if (typeof window.loadPyodide === 'function') {
           try {
             console.log('Using top-level loadPyodide function');
             const pyodideInstance = await window.loadPyodide({
-              indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+              indexURL: indexURL
             });
             console.log('Pyodide initialized successfully');
             setPyodide(pyodideInstance);
@@ -294,12 +315,11 @@ export default function PythonBasic() {
           // 动态加载Pyodide脚本
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+            script.src = `${indexURL}pyodide.js`;
             script.type = 'text/javascript';
             script.crossOrigin = 'anonymous';
             script.onload = () => {
               console.log('Pyodide script loaded successfully');
-              // 直接调用loadPyodide
               if (typeof window.loadPyodide === 'function') {
                 resolve();
               } else {
@@ -317,7 +337,7 @@ export default function PythonBasic() {
           if (typeof window.loadPyodide === 'function') {
             try {
               const pyodideInstance = await window.loadPyodide({
-                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+                indexURL: indexURL
               });
               console.log('Pyodide initialized successfully');
               setPyodide(pyodideInstance);
@@ -359,17 +379,46 @@ export default function PythonBasic() {
     }
   };
 
-  const runExercise = (exercise: string) => {
-    setCurrentExercise(exercise);
-    setExerciseInput('');
-    setExerciseOutput('');
-    setShowAnswer(false);
+  // 重置练习
+  const resetExercise = (exercise: string) => {
+    setExerciseStates(prev => ({
+      ...prev,
+      [exercise]: { ...initialExerciseState }
+    }));
+  };
+
+  // 更新练习输入
+  const updateExerciseInput = (exercise: string, value: string) => {
+    setExerciseStates(prev => ({
+      ...prev,
+      [exercise]: { ...prev[exercise], input: value }
+    }));
+  };
+
+  // 切换显示答案
+  const toggleShowAnswer = (exercise: string) => {
+    setExerciseStates(prev => ({
+      ...prev,
+      [exercise]: { ...prev[exercise], showAnswer: !prev[exercise].showAnswer }
+    }));
+  };
+
+  // 填充代码示例
+  const fillCodeExample = (exercise: string, code: string) => {
+    setExerciseStates(prev => ({
+      ...prev,
+      [exercise]: { ...prev[exercise], input: code }
+    }));
   };
 
   // 使用后端服务器执行Python代码
-  const executeCodeBackend = async () => {
+  const executeCodeBackend = async (exercise: string) => {
+    const exerciseInput = exerciseStates[exercise]?.input || '';
     try {
-      setExerciseOutput('Executing...');
+      setExerciseStates(prev => ({
+        ...prev,
+        [exercise]: { ...prev[exercise], output: 'Executing...' }
+      }));
       
       const response = await fetch('http://localhost:8000/run', {
         method: 'POST',
@@ -382,27 +431,44 @@ export default function PythonBasic() {
       const data = await response.json();
       
       if (data.success) {
-        setExerciseOutput(data.output);
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: data.output }
+        }));
       } else {
-        setExerciseOutput('执行错误：' + data.error);
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: '执行错误：' + data.error }
+        }));
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      setExerciseOutput('执行错误：' + errorMessage);
+      setExerciseStates(prev => ({
+        ...prev,
+        [exercise]: { ...prev[exercise], output: '执行错误：' + errorMessage }
+      }));
       console.error('Backend execution error:', err);
     }
   };
 
   // 执行代码（根据选择的模式）
-  const executeCode = async () => {
+  const executeCode = async (exercise: string) => {
+    const exerciseInput = exerciseStates[exercise]?.input || '';
+    
     if (executionMode === 'pyodide') {
       if (!pyodide) {
-        setExerciseOutput('Python interpreter is not loaded yet.');
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: 'Python interpreter is not loaded yet.' }
+        }));
         return;
       }
 
       try {
-        setExerciseOutput('Executing...');
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: 'Executing...' }
+        }));
         
         // 重定向stdout
         let output = '';
@@ -417,15 +483,21 @@ export default function PythonBasic() {
         pyodide.globals.set('print', pyodide.globals.get('__builtins__').print);
         
         // 显示输出
-        setExerciseOutput(output || '代码执行成功！');
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: output || '代码执行成功！' }
+        }));
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        setExerciseOutput('执行错误：' + errorMessage);
+        setExerciseStates(prev => ({
+          ...prev,
+          [exercise]: { ...prev[exercise], output: '执行错误：' + errorMessage }
+        }));
         console.error('Pyodide execution error:', err);
       }
     } else {
       // 使用后端服务器执行
-      await executeCodeBackend();
+      await executeCodeBackend(exercise);
     }
   };
 
@@ -518,94 +590,100 @@ export default function PythonBasic() {
                       编写一个程序，输出你的姓名、年龄和专业，并添加适当的注释说明。
                     </p>
                     <div className="mt-4">
-                      <button 
-                        onClick={() => runExercise('environment')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
-                      >
-                        开始练习
-                      </button>
-                      <button 
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        {showAnswer ? '隐藏答案' : '显示答案'}
-                      </button>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <button 
+                          onClick={() => fillCodeExample('environment', exerciseAnswers.environment)}
+                          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors text-sm font-medium"
+                        >
+                          填充答案代码
+                        </button>
+                        <button 
+                          onClick={() => resetExercise('environment')}
+                          className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors text-sm font-medium"
+                        >
+                          重置
+                        </button>
+                        <button 
+                          onClick={() => toggleShowAnswer('environment')}
+                          className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                        >
+                          {exerciseStates.environment?.showAnswer ? '隐藏答案' : '显示答案'}
+                        </button>
+                      </div>
                       
-                      {showAnswer && exerciseAnswers.environment && (
+                      {exerciseStates.environment?.showAnswer && exerciseAnswers.environment && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
                           <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.environment}</pre>
                         </div>
                       )}
                       
-                      {currentExercise === 'environment' && (
-                        <div className="mt-4">
-                          {loading ? (
-                            <div className="flex justify-center items-center py-10">
-                              <div className="text-emerald-600">加载Python解释器中...</div>
+                      <div className="mt-4">
+                        {loading ? (
+                          <div className="flex justify-center items-center py-10">
+                            <div className="text-emerald-600">加载Python解释器中...</div>
+                          </div>
+                        ) : error ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                            {error}
+                          </div>
+                        ) : (
+                          <>
+                            {/* 执行模式切换 */}
+                            <div className="mb-4 flex items-center">
+                              <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                              <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="pyodide"
+                                    checked={executionMode === 'pyodide'}
+                                    onChange={() => setExecutionMode('pyodide')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="backend"
+                                    checked={executionMode === 'backend'}
+                                    onChange={() => setExecutionMode('backend')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">后端执行 (服务器)</span>
+                                </label>
+                              </div>
                             </div>
-                          ) : error ? (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                              {error}
+                            
+                            <div className="border border-gray-300 rounded-lg overflow-hidden">
+                              <CodeMirror
+                                value={exerciseStates.environment?.input || ''}
+                                onChange={(value) => updateExerciseInput('environment', value)}
+                                extensions={[python()]}
+                                theme={oneDark}
+                                height="200px"
+                                placeholder="在此输入Python代码..."
+                              />
                             </div>
-                          ) : (
-                            <>
-                              {/* 执行模式切换 */}
-                              <div className="mb-4 flex items-center">
-                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="pyodide"
-                                      checked={executionMode === 'pyodide'}
-                                      onChange={() => setExecutionMode('pyodide')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
-                                  </label>
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="backend"
-                                      checked={executionMode === 'backend'}
-                                      onChange={() => setExecutionMode('backend')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">后端执行 (服务器)</span>
-                                  </label>
-                                </div>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => executeCode('environment')}
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                              >
+                                运行代码
+                              </button>
+                            </div>
+                            {exerciseStates.environment?.output && (
+                              <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                <pre className="text-sm whitespace-pre-wrap">{exerciseStates.environment.output}</pre>
                               </div>
-                              
-                              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                                <CodeMirror
-                                  value={exerciseInput}
-                                  onChange={(value) => setExerciseInput(value)}
-                                  extensions={[python()]}
-                                  theme={oneDark}
-                                  height="200px"
-                                  placeholder="在此输入Python代码..."
-                                />
-                              </div>
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  onClick={executeCode}
-                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                                >
-                                  运行代码
-                                </button>
-                              </div>
-                              {exerciseOutput && (
-                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -688,94 +766,100 @@ export default function PythonBasic() {
                       创建一个包含学生信息的字典，包括姓名、年龄、专业和课程列表，然后进行相应的操作。
                     </p>
                     <div className="mt-4">
-                      <button 
-                        onClick={() => runExercise('variables')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
-                      >
-                        开始练习
-                      </button>
-                      <button 
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        {showAnswer ? '隐藏答案' : '显示答案'}
-                      </button>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <button 
+                          onClick={() => fillCodeExample('variables', exerciseAnswers.variables)}
+                          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors text-sm font-medium"
+                        >
+                          填充答案代码
+                        </button>
+                        <button 
+                          onClick={() => resetExercise('variables')}
+                          className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors text-sm font-medium"
+                        >
+                          重置
+                        </button>
+                        <button 
+                          onClick={() => toggleShowAnswer('variables')}
+                          className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                        >
+                          {exerciseStates.variables?.showAnswer ? '隐藏答案' : '显示答案'}
+                        </button>
+                      </div>
                       
-                      {showAnswer && exerciseAnswers.variables && (
+                      {exerciseStates.variables?.showAnswer && exerciseAnswers.variables && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
                           <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.variables}</pre>
                         </div>
                       )}
                       
-                      {currentExercise === 'variables' && (
-                        <div className="mt-4">
-                          {loading ? (
-                            <div className="flex justify-center items-center py-10">
-                              <div className="text-emerald-600">加载Python解释器中...</div>
+                      <div className="mt-4">
+                        {loading ? (
+                          <div className="flex justify-center items-center py-10">
+                            <div className="text-emerald-600">加载Python解释器中...</div>
+                          </div>
+                        ) : error ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                            {error}
+                          </div>
+                        ) : (
+                          <>
+                            {/* 执行模式切换 */}
+                            <div className="mb-4 flex items-center">
+                              <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                              <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="pyodide"
+                                    checked={executionMode === 'pyodide'}
+                                    onChange={() => setExecutionMode('pyodide')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="backend"
+                                    checked={executionMode === 'backend'}
+                                    onChange={() => setExecutionMode('backend')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">后端执行 (服务器)</span>
+                                </label>
+                              </div>
                             </div>
-                          ) : error ? (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                              {error}
+                            
+                            <div className="border border-gray-300 rounded-lg overflow-hidden">
+                              <CodeMirror
+                                value={exerciseStates.variables?.input || ''}
+                                onChange={(value) => updateExerciseInput('variables', value)}
+                                extensions={[python()]}
+                                theme={oneDark}
+                                height="200px"
+                                placeholder="在此输入Python代码..."
+                              />
                             </div>
-                          ) : (
-                            <>
-                              {/* 执行模式切换 */}
-                              <div className="mb-4 flex items-center">
-                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="pyodide"
-                                      checked={executionMode === 'pyodide'}
-                                      onChange={() => setExecutionMode('pyodide')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
-                                  </label>
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="backend"
-                                      checked={executionMode === 'backend'}
-                                      onChange={() => setExecutionMode('backend')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">后端执行 (服务器)</span>
-                                  </label>
-                                </div>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => executeCode('variables')}
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                              >
+                                运行代码
+                              </button>
+                            </div>
+                            {exerciseStates.variables?.output && (
+                              <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                <pre className="text-sm whitespace-pre-wrap">{exerciseStates.variables.output}</pre>
                               </div>
-                              
-                              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                                <CodeMirror
-                                  value={exerciseInput}
-                                  onChange={(value) => setExerciseInput(value)}
-                                  extensions={[python()]}
-                                  theme={oneDark}
-                                  height="200px"
-                                  placeholder="在此输入Python代码..."
-                                />
-                              </div>
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  onClick={executeCode}
-                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                                >
-                                  运行代码
-                                </button>
-                              </div>
-                              {exerciseOutput && (
-                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -836,94 +920,100 @@ export default function PythonBasic() {
                       编写一个程序，根据输入的分数判断成绩等级：90-100为优秀，80-89为良好，70-79为中等，60-69为及格，60以下为不及格。
                     </p>
                     <div className="mt-4">
-                      <button 
-                        onClick={() => runExercise('operators')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
-                      >
-                        开始练习
-                      </button>
-                      <button 
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        {showAnswer ? '隐藏答案' : '显示答案'}
-                      </button>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <button 
+                          onClick={() => fillCodeExample('operators', exerciseAnswers.operators)}
+                          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors text-sm font-medium"
+                        >
+                          填充答案代码
+                        </button>
+                        <button 
+                          onClick={() => resetExercise('operators')}
+                          className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors text-sm font-medium"
+                        >
+                          重置
+                        </button>
+                        <button 
+                          onClick={() => toggleShowAnswer('operators')}
+                          className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                        >
+                          {exerciseStates.operators?.showAnswer ? '隐藏答案' : '显示答案'}
+                        </button>
+                      </div>
                       
-                      {showAnswer && exerciseAnswers.operators && (
+                      {exerciseStates.operators?.showAnswer && exerciseAnswers.operators && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
                           <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.operators}</pre>
                         </div>
                       )}
                       
-                      {currentExercise === 'operators' && (
-                        <div className="mt-4">
-                          {loading ? (
-                            <div className="flex justify-center items-center py-10">
-                              <div className="text-emerald-600">加载Python解释器中...</div>
+                      <div className="mt-4">
+                        {loading ? (
+                          <div className="flex justify-center items-center py-10">
+                            <div className="text-emerald-600">加载Python解释器中...</div>
+                          </div>
+                        ) : error ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                            {error}
+                          </div>
+                        ) : (
+                          <>
+                            {/* 执行模式切换 */}
+                            <div className="mb-4 flex items-center">
+                              <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                              <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="pyodide"
+                                    checked={executionMode === 'pyodide'}
+                                    onChange={() => setExecutionMode('pyodide')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="backend"
+                                    checked={executionMode === 'backend'}
+                                    onChange={() => setExecutionMode('backend')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">后端执行 (服务器)</span>
+                                </label>
+                              </div>
                             </div>
-                          ) : error ? (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                              {error}
+                            
+                            <div className="border border-gray-300 rounded-lg overflow-hidden">
+                              <CodeMirror
+                                value={exerciseStates.operators?.input || ''}
+                                onChange={(value) => updateExerciseInput('operators', value)}
+                                extensions={[python()]}
+                                theme={oneDark}
+                                height="200px"
+                                placeholder="在此输入Python代码..."
+                              />
                             </div>
-                          ) : (
-                            <>
-                              {/* 执行模式切换 */}
-                              <div className="mb-4 flex items-center">
-                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="pyodide"
-                                      checked={executionMode === 'pyodide'}
-                                      onChange={() => setExecutionMode('pyodide')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
-                                  </label>
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="backend"
-                                      checked={executionMode === 'backend'}
-                                      onChange={() => setExecutionMode('backend')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">后端执行 (服务器)</span>
-                                  </label>
-                                </div>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => executeCode('operators')}
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                              >
+                                运行代码
+                              </button>
+                            </div>
+                            {exerciseStates.operators?.output && (
+                              <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                <pre className="text-sm whitespace-pre-wrap">{exerciseStates.operators.output}</pre>
                               </div>
-                              
-                              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                                <CodeMirror
-                                  value={exerciseInput}
-                                  onChange={(value) => setExerciseInput(value)}
-                                  extensions={[python()]}
-                                  theme={oneDark}
-                                  height="200px"
-                                  placeholder="在此输入Python代码..."
-                                />
-                              </div>
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  onClick={executeCode}
-                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                                >
-                                  运行代码
-                                </button>
-                              </div>
-                              {exerciseOutput && (
-                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -984,94 +1074,100 @@ export default function PythonBasic() {
                       编写一个函数，将摄氏度转换为华氏度，公式：华氏度 = 摄氏度 × 9/5 + 32。
                     </p>
                     <div className="mt-4">
-                      <button 
-                        onClick={() => runExercise('functions')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
-                      >
-                        开始练习
-                      </button>
-                      <button 
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        {showAnswer ? '隐藏答案' : '显示答案'}
-                      </button>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <button 
+                          onClick={() => fillCodeExample('functions', exerciseAnswers.functions)}
+                          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors text-sm font-medium"
+                        >
+                          填充答案代码
+                        </button>
+                        <button 
+                          onClick={() => resetExercise('functions')}
+                          className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors text-sm font-medium"
+                        >
+                          重置
+                        </button>
+                        <button 
+                          onClick={() => toggleShowAnswer('functions')}
+                          className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                        >
+                          {exerciseStates.functions?.showAnswer ? '隐藏答案' : '显示答案'}
+                        </button>
+                      </div>
                       
-                      {showAnswer && exerciseAnswers.functions && (
+                      {exerciseStates.functions?.showAnswer && exerciseAnswers.functions && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
                           <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.functions}</pre>
                         </div>
                       )}
                       
-                      {currentExercise === 'functions' && (
-                        <div className="mt-4">
-                          {loading ? (
-                            <div className="flex justify-center items-center py-10">
-                              <div className="text-emerald-600">加载Python解释器中...</div>
+                      <div className="mt-4">
+                        {loading ? (
+                          <div className="flex justify-center items-center py-10">
+                            <div className="text-emerald-600">加载Python解释器中...</div>
+                          </div>
+                        ) : error ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                            {error}
+                          </div>
+                        ) : (
+                          <>
+                            {/* 执行模式切换 */}
+                            <div className="mb-4 flex items-center">
+                              <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                              <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="pyodide"
+                                    checked={executionMode === 'pyodide'}
+                                    onChange={() => setExecutionMode('pyodide')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="backend"
+                                    checked={executionMode === 'backend'}
+                                    onChange={() => setExecutionMode('backend')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">后端执行 (服务器)</span>
+                                </label>
+                              </div>
                             </div>
-                          ) : error ? (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                              {error}
+                            
+                            <div className="border border-gray-300 rounded-lg overflow-hidden">
+                              <CodeMirror
+                                value={exerciseStates.functions?.input || ''}
+                                onChange={(value) => updateExerciseInput('functions', value)}
+                                extensions={[python()]}
+                                theme={oneDark}
+                                height="200px"
+                                placeholder="在此输入Python代码..."
+                              />
                             </div>
-                          ) : (
-                            <>
-                              {/* 执行模式切换 */}
-                              <div className="mb-4 flex items-center">
-                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="pyodide"
-                                      checked={executionMode === 'pyodide'}
-                                      onChange={() => setExecutionMode('pyodide')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
-                                  </label>
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="backend"
-                                      checked={executionMode === 'backend'}
-                                      onChange={() => setExecutionMode('backend')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">后端执行 (服务器)</span>
-                                  </label>
-                                </div>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => executeCode('functions')}
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                              >
+                                运行代码
+                              </button>
+                            </div>
+                            {exerciseStates.functions?.output && (
+                              <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                <pre className="text-sm whitespace-pre-wrap">{exerciseStates.functions.output}</pre>
                               </div>
-                              
-                              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                                <CodeMirror
-                                  value={exerciseInput}
-                                  onChange={(value) => setExerciseInput(value)}
-                                  extensions={[python()]}
-                                  theme={oneDark}
-                                  height="200px"
-                                  placeholder="在此输入Python代码..."
-                                />
-                              </div>
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  onClick={executeCode}
-                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                                >
-                                  运行代码
-                                </button>
-                              </div>
-                              {exerciseOutput && (
-                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1137,94 +1233,100 @@ export default function PythonBasic() {
                       编写一个Book类，包含书名、作者、出版年份等属性，以及获取图书信息的方法。
                     </p>
                     <div className="mt-4">
-                      <button 
-                        onClick={() => runExercise('oop')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
-                      >
-                        开始练习
-                      </button>
-                      <button 
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        {showAnswer ? '隐藏答案' : '显示答案'}
-                      </button>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <button 
+                          onClick={() => fillCodeExample('oop', exerciseAnswers.oop)}
+                          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors text-sm font-medium"
+                        >
+                          填充答案代码
+                        </button>
+                        <button 
+                          onClick={() => resetExercise('oop')}
+                          className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors text-sm font-medium"
+                        >
+                          重置
+                        </button>
+                        <button 
+                          onClick={() => toggleShowAnswer('oop')}
+                          className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                        >
+                          {exerciseStates.oop?.showAnswer ? '隐藏答案' : '显示答案'}
+                        </button>
+                      </div>
                       
-                      {showAnswer && exerciseAnswers.oop && (
+                      {exerciseStates.oop?.showAnswer && exerciseAnswers.oop && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
                           <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.oop}</pre>
                         </div>
                       )}
                       
-                      {currentExercise === 'oop' && (
-                        <div className="mt-4">
-                          {loading ? (
-                            <div className="flex justify-center items-center py-10">
-                              <div className="text-emerald-600">加载Python解释器中...</div>
+                      <div className="mt-4">
+                        {loading ? (
+                          <div className="flex justify-center items-center py-10">
+                            <div className="text-emerald-600">加载Python解释器中...</div>
+                          </div>
+                        ) : error ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                            {error}
+                          </div>
+                        ) : (
+                          <>
+                            {/* 执行模式切换 */}
+                            <div className="mb-4 flex items-center">
+                              <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
+                              <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="pyodide"
+                                    checked={executionMode === 'pyodide'}
+                                    onChange={() => setExecutionMode('pyodide')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">浏览器执行 (Pyodide)</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="executionMode"
+                                    value="backend"
+                                    checked={executionMode === 'backend'}
+                                    onChange={() => setExecutionMode('backend')}
+                                    className="mr-2"
+                                  />
+                                  <span className="text-sm">后端执行 (服务器)</span>
+                                </label>
+                              </div>
                             </div>
-                          ) : error ? (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                              {error}
+                            
+                            <div className="border border-gray-300 rounded-lg overflow-hidden">
+                              <CodeMirror
+                                value={exerciseStates.oop?.input || ''}
+                                onChange={(value) => updateExerciseInput('oop', value)}
+                                extensions={[python()]}
+                                theme={oneDark}
+                                height="200px"
+                                placeholder="在此输入Python代码..."
+                              />
                             </div>
-                          ) : (
-                            <>
-                              {/* 执行模式切换 */}
-                              <div className="mb-4 flex items-center">
-                                <span className="text-sm font-medium text-gray-700 mr-4">执行模式：</span>
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="pyodide"
-                                      checked={executionMode === 'pyodide'}
-                                      onChange={() => setExecutionMode('pyodide')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">浏览器执行 (Pyodide)</span>
-                                  </label>
-                                  <label className="flex items-center">
-                                    <input
-                                      type="radio"
-                                      name="executionMode"
-                                      value="backend"
-                                      checked={executionMode === 'backend'}
-                                      onChange={() => setExecutionMode('backend')}
-                                      className="mr-2"
-                                    />
-                                    <span className="text-sm">后端执行 (服务器)</span>
-                                  </label>
-                                </div>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => executeCode('oop')}
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
+                              >
+                                运行代码
+                              </button>
+                            </div>
+                            {exerciseStates.oop?.output && (
+                              <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
+                                <pre className="text-sm whitespace-pre-wrap">{exerciseStates.oop.output}</pre>
                               </div>
-                              
-                              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                                <CodeMirror
-                                  value={exerciseInput}
-                                  onChange={(value) => setExerciseInput(value)}
-                                  extensions={[python()]}
-                                  theme={oneDark}
-                                  height="200px"
-                                  placeholder="在此输入Python代码..."
-                                />
-                              </div>
-                              <div className="mt-4 flex justify-end">
-                                <button
-                                  onClick={executeCode}
-                                  className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium"
-                                >
-                                  运行代码
-                                </button>
-                              </div>
-                              {exerciseOutput && (
-                                <div className="mt-4 p-3 bg-gray-900 text-gray-100 rounded-lg">
-                                  <pre className="text-sm whitespace-pre-wrap">{exerciseOutput}</pre>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
