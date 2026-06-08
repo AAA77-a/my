@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// 增强版Python编程练习页面 - 添加了独立练习状态和更多功能
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
