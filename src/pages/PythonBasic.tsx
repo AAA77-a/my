@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -166,6 +165,95 @@ with open("example.txt", "r", encoding="utf-8") as f:
         print(line.strip())`
 };
 
+// 参考答案数据
+const exerciseAnswers = {
+  environment: `# 编写一个简单的Python程序
+# 作者：黄安德
+author = "黄安德"
+age = 20
+major = "商务数据分析"
+
+# 输出信息
+print(f"姓名：{author}")
+print(f"年龄：{age}")
+print(f"专业：{major}")
+print("\\n这是一段简单的Python代码，用于输出个人信息。")`,
+  variables: `# 创建包含学生信息的字典
+student = {
+    "name": "黄安德",
+    "age": 20,
+    "major": "商务数据分析",
+    "courses": ["Python基础", "数据分析", "机器学习"]
+}
+
+# 打印学生信息
+print(f"学生姓名：{student['name']}")
+print(f"学生年龄：{student['age']}")
+print(f"所学专业：{student['major']}")
+print(f"选修课程：{', '.join(student['courses'])}")
+
+# 添加新信息
+student["grade"] = "大三"
+print(f"当前年级：{student['grade']}")
+
+# 删除信息
+del student["grade"]
+print(f"删除后的键：{list(student.keys())}")`,
+  operators: `# 成绩等级判断
+score = int(input("请输入分数："))
+
+if score >= 90:
+    print("优秀")
+elif score >= 80:
+    print("良好")
+elif score >= 70:
+    print("中等")
+elif score >= 60:
+    print("及格")
+else:
+    print("不及格")
+
+# 列表推导式实现
+grades = [85, 92, 45, 78, 60]
+results = ["优秀" if s >= 90 else "良好" if s >= 80 else "中等" if s >= 70 else "及格" if s >= 60 else "不及格" for s in grades]
+print(f"成绩列表：{grades}")
+print(f"等级列表：{results}")`,
+  functions: `# 温度转换函数
+def celsius_to_fahrenheit(celsius):
+    """将摄氏度转换为华氏度"""
+    fahrenheit = celsius * 9/5 + 32
+    return fahrenheit
+
+# 测试函数
+temps = [0, 25, 37, 100]
+for temp in temps:
+    f = celsius_to_fahrenheit(temp)
+    print(f"{temp}°C = {f}°F")`,
+  oop: `# 创建图书类
+class Book:
+    def __init__(self, title, author, year):
+        self.title = title
+        self.author = author
+        self.year = year
+    
+    def get_info(self):
+        """获取图书信息"""
+        return f"《{self.title}》- {self.author} ({self.year}年)"
+    
+    def __str__(self):
+        return self.get_info()
+
+# 创建图书对象
+book1 = Book("Python编程", "黄安德", 2024)
+book2 = Book("数据分析实战", "张三", 2023)
+
+print(book1.get_info())
+print(book2)
+print(f"书名：{book1.title}")
+print(f"作者：{book1.author}")
+print(f"出版年份：{book1.year}")`
+};
+
 export default function PythonBasic() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
@@ -176,6 +264,7 @@ export default function PythonBasic() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [executionMode, setExecutionMode] = useState<string>('pyodide'); // 'pyodide' or 'backend'
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
   // 初始化Pyodide
   useEffect(() => {
@@ -274,6 +363,7 @@ export default function PythonBasic() {
     setCurrentExercise(exercise);
     setExerciseInput('');
     setExerciseOutput('');
+    setShowAnswer(false);
   };
 
   // 使用后端服务器执行Python代码
@@ -346,7 +436,7 @@ export default function PythonBasic() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-xl font-light tracking-wide">黄安德</div>
           <div className="flex space-x-6">
-            <Link to="/" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</Link>
+            <a href="/" className="hover:text-emerald-500 transition-colors text-sm font-medium">首页</a>
             <a href="/#courses" className="hover:text-emerald-500 transition-colors text-sm font-medium">课程</a>
             <a href="/#about" className="hover:text-emerald-500 transition-colors text-sm font-medium">关于我</a>
           </div>
@@ -430,10 +520,23 @@ export default function PythonBasic() {
                     <div className="mt-4">
                       <button 
                         onClick={() => runExercise('environment')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
                       >
                         开始练习
                       </button>
+                      <button 
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        {showAnswer ? '隐藏答案' : '显示答案'}
+                      </button>
+                      
+                      {showAnswer && exerciseAnswers.environment && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
+                          <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.environment}</pre>
+                        </div>
+                      )}
                       
                       {currentExercise === 'environment' && (
                         <div className="mt-4">
@@ -587,10 +690,23 @@ export default function PythonBasic() {
                     <div className="mt-4">
                       <button 
                         onClick={() => runExercise('variables')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
                       >
                         开始练习
                       </button>
+                      <button 
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        {showAnswer ? '隐藏答案' : '显示答案'}
+                      </button>
+                      
+                      {showAnswer && exerciseAnswers.variables && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
+                          <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.variables}</pre>
+                        </div>
+                      )}
                       
                       {currentExercise === 'variables' && (
                         <div className="mt-4">
@@ -722,10 +838,23 @@ export default function PythonBasic() {
                     <div className="mt-4">
                       <button 
                         onClick={() => runExercise('operators')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
                       >
                         开始练习
                       </button>
+                      <button 
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        {showAnswer ? '隐藏答案' : '显示答案'}
+                      </button>
+                      
+                      {showAnswer && exerciseAnswers.operators && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
+                          <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.operators}</pre>
+                        </div>
+                      )}
                       
                       {currentExercise === 'operators' && (
                         <div className="mt-4">
@@ -857,10 +986,23 @@ export default function PythonBasic() {
                     <div className="mt-4">
                       <button 
                         onClick={() => runExercise('functions')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
                       >
                         开始练习
                       </button>
+                      <button 
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        {showAnswer ? '隐藏答案' : '显示答案'}
+                      </button>
+                      
+                      {showAnswer && exerciseAnswers.functions && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
+                          <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.functions}</pre>
+                        </div>
+                      )}
                       
                       {currentExercise === 'functions' && (
                         <div className="mt-4">
@@ -997,10 +1139,23 @@ export default function PythonBasic() {
                     <div className="mt-4">
                       <button 
                         onClick={() => runExercise('oop')}
-                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mb-4"
+                        className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-200 transition-colors text-sm font-medium mr-3"
                       >
                         开始练习
                       </button>
+                      <button 
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        {showAnswer ? '隐藏答案' : '显示答案'}
+                      </button>
+                      
+                      {showAnswer && exerciseAnswers.oop && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700 mb-2">参考答案：</p>
+                          <pre className="text-sm text-green-800 whitespace-pre-wrap">{exerciseAnswers.oop}</pre>
+                        </div>
+                      )}
                       
                       {currentExercise === 'oop' && (
                         <div className="mt-4">
